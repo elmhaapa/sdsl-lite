@@ -370,7 +370,7 @@ class wm_int
             assert(i <= size());
             assert(j <= size());
             if (((1ULL)<<(m_max_level))<=c) { // c is greater than any symbol in wt
-                return 0;
+                return {0, 0};
             }
             size_type b = 0; // start position of the interval
             uint64_t mask = (1ULL) << (m_max_level-1);
