@@ -20,7 +20,9 @@ class hac_vector {
     typedef uint64_t value_type;
 
   private:
-    size_type* m_data;
+    //size_type* m_data;
+    std::vector<size_type> m_data;
+
     value_type m_size = 0;
     // Treshold value after which we put in map.
     value_type treshold = (1 << 8) - 2;
@@ -62,7 +64,7 @@ class hac_vector {
 
     size_type size() const
     {
-      return m_size;
+      return m_data.size();
     }
     static size_type max_size()
     {
@@ -97,7 +99,7 @@ template<class Container>
 hac_vector::hac_vector(const Container& c)
 {
   value_type n = c.size(), val = 0;
-  m_data = new size_type[n];
+  m_data = std::vector<size_type>(n);
   m_size = n;
   for (value_type i = 0; i < n; ++i) {
     val = c[i];
@@ -116,7 +118,7 @@ hac_vector::hac_vector(int_vector_buffer<int_width>& v_buf)
 {
   value_type n = v_buf.size();
   value_type val = 0;
-  m_data = new size_type[n];
+  m_data = std::vector<size_type>(n);
   m_size = n;
   for (value_type i = 0; i < n; ++i) {
     val = v_buf[i];
@@ -134,7 +136,7 @@ void hac_vector::load(std::istream& in)
   value_type val = 0;
   dac_vector<> tmpv;
   sdsl::load(tmpv, in);
-  m_data = new size_type[tmpv.size()];
+  m_data = std::vector<size_type>(tmpv.size());
   m_size = tmpv.size();
   for (value_type i = 0; i < tmpv.size(); ++i) {
     val = tmpv[i];
