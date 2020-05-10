@@ -14,23 +14,24 @@ namespace sdsl
  * If integer is less than or equal treshold value 2^w_i - 2 we save it in the int_vector<w_i>,
  * otherwise we store it in unordered_map<w_i, uint64_t>.
  * */
-template<uint8_t i_w>
 class hac_vector {
   public:
-    typedef typename int_vector<i_w>::size_type size_type;
-    typedef typename int_vector<>::value_type value_type;
+    typedef uint8_t size_type;
+    typedef uint64_t value_type;
 
   private:
-    int_vector<i_w> m_data;
+    size_type* m_data;
+    value_type m_size = 0;
     // Treshold value after which we put in map.
-    value_type treshold = (1 << i_w) - 2;
+    value_type treshold = (1 << 8) - 2;
     // Over the treshold token
     value_type ott = treshold + 1;
-    std::unordered_map<size_type, value_type> m_map;
+    std::unordered_map<value_type, value_type> m_map;
     void copy(const hac_vector& v)
     {
       m_data = v.m_data;
       m_map = v.m_map;
+      m_size = v.m_size;
     }
   public:
     hac_vector() = default;
@@ -61,7 +62,7 @@ class hac_vector {
 
     size_type size() const
     {
-      return m_data.size();
+      return m_size;
     }
     static size_type max_size()
     {
@@ -69,7 +70,7 @@ class hac_vector {
     }
     bool empty() const
     {
-      return m_data.empty();
+      return m_size == 0;
     }
 
     value_type operator[](size_type i)const
@@ -92,46 +93,71 @@ class hac_vector {
 
 };
 
-template<uint8_t i_w>
 template<class Container>
-hac_vector<i_w>::hac_vector(const Container& c)
+hac_vector::hac_vector(const Container& c)
 {
-  size_type n = c.size(), val = 0;
-  m_data = int_vector<i_w>(n, ott);
-  for (size_type i = 0; i < n; ++i) {
+  value_type n = c.size(), val = 0;
+  m_data = new size_type[n];
+  m_size = n;
+  for (value_type i = 0; i < n; ++i) {
     val = c[i];
     if (val <= treshold) {
       m_data[i] = val;
     } else {
       m_map[i] = val;
+      m_data[i] = ott;
     }
   }
+  /*
+  for (value_type i = 0; i < n; ++i) {
+    // std::cout << (*this)[i] << " " << c[i] << std::endl;
+    if ((*this)[i] != c[i]) {
+      std::cout << "Container!" << std::endl;
+    }
+  }
+  */
 }
 
-template<uint8_t i_w>
 template<uint8_t int_width>
-hac_vector<i_w>::hac_vector(int_vector_buffer<int_width>& v_buf)
+hac_vector::hac_vector(int_vector_buffer<int_width>& v_buf)
 {
-  size_type n = v_buf.size(), val = 0;
-  m_data = int_vector<i_w>(n, ott);
-  for (size_type i = 0; i < n; ++i) {
+  // std::cout << "int_vector_buffer!" << std::endl;
+  value_type n = v_buf.size();
+  value_type val = 0;
+  m_data = new size_type[n];
+  m_size = n;
+  //std::cout << "v_buf.size() " << n << std::endl;
+  //std::cout << "this size: " << (*this).size() << std::endl;
+  for (value_type i = 0; i < n; ++i) {
     val = v_buf[i];
+    // std::cout << "val " << val << std::endl;
     if (val <= treshold) {
       m_data[i] = val;
+      // std::cout << "m_data " << val << " " << m_data[i] << " " << v_buf[i] << std::endl;
     } else {
       m_map[i] = val;
+      m_data[i] = ott;
+      // std::cout << "m_map " << val << " " << m_map[i] << " " << v_buf[i] << std::endl;
     }
   }
+  /*
+  for (value_type i = 0; i < n; ++i) {
+    // std::cout << (*this)[i] << " " << v_buf[i] << std::endl;
+    if ((*this)[i] != (v_buf[i] + 1)) {
+      std::cout << "int_vector_buffer" << std::endl;
+    }
+  }
+  */
 }
 
-template<uint8_t i_w>
-void hac_vector<i_w>::load(std::istream& in)
+void hac_vector::load(std::istream& in)
 {
   value_type val = 0;
   dac_vector<> tmpv;
   sdsl::load(tmpv, in);
-  m_data.resize(tmpv.size());
-  for (size_type i = 0; i < tmpv.size(); ++i) {
+  m_data = new size_type[tmpv.size()];
+  m_size = tmpv.size();
+  for (value_type i = 0; i < tmpv.size(); ++i) {
     val = tmpv[i];
     if (val <= treshold) {
       m_data[i] = val;
@@ -142,14 +168,13 @@ void hac_vector<i_w>::load(std::istream& in)
   }
 }
 
-template<uint8_t i_w>
-typename hac_vector<i_w>::size_type hac_vector<i_w>::serialize(std::ostream& out, structure_tree_node* v, std::string name)const
+typename hac_vector::size_type hac_vector::serialize(std::ostream& out, structure_tree_node* v, std::string name)const
 {
   value_type val = 0;
-  size_type n = m_data.size();
+  value_type n = m_size;
   // FIXME this is not the best way to go about it.
   int_vector<64> tmpv = int_vector<64>(n, 0);
-  for (size_type i = 0; i < n; ++i) {
+  for (value_type i = 0; i < n; ++i) {
     val = m_data[i];
     if (val > treshold) {
       auto it = m_map.find(i);
