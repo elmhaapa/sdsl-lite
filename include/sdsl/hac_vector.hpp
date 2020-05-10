@@ -73,7 +73,7 @@ class hac_vector {
       return m_size == 0;
     }
 
-    value_type operator[](size_type i)const
+    value_type operator[](value_type i)const
     {
       if (m_data[i] <= treshold) {
         // access array
@@ -108,46 +108,25 @@ hac_vector::hac_vector(const Container& c)
       m_data[i] = ott;
     }
   }
-  /*
-  for (value_type i = 0; i < n; ++i) {
-    // std::cout << (*this)[i] << " " << c[i] << std::endl;
-    if ((*this)[i] != c[i]) {
-      std::cout << "Container!" << std::endl;
-    }
-  }
-  */
+
 }
 
 template<uint8_t int_width>
 hac_vector::hac_vector(int_vector_buffer<int_width>& v_buf)
 {
-  // std::cout << "int_vector_buffer!" << std::endl;
   value_type n = v_buf.size();
   value_type val = 0;
   m_data = new size_type[n];
   m_size = n;
-  //std::cout << "v_buf.size() " << n << std::endl;
-  //std::cout << "this size: " << (*this).size() << std::endl;
   for (value_type i = 0; i < n; ++i) {
     val = v_buf[i];
-    // std::cout << "val " << val << std::endl;
     if (val <= treshold) {
       m_data[i] = val;
-      // std::cout << "m_data " << val << " " << m_data[i] << " " << v_buf[i] << std::endl;
     } else {
       m_map[i] = val;
       m_data[i] = ott;
-      // std::cout << "m_map " << val << " " << m_map[i] << " " << v_buf[i] << std::endl;
     }
   }
-  /*
-  for (value_type i = 0; i < n; ++i) {
-    // std::cout << (*this)[i] << " " << v_buf[i] << std::endl;
-    if ((*this)[i] != (v_buf[i] + 1)) {
-      std::cout << "int_vector_buffer" << std::endl;
-    }
-  }
-  */
 }
 
 void hac_vector::load(std::istream& in)
